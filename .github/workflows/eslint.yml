@@ -17,13 +17,12 @@ jobs:
       - name: Install NVM
         run: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 
-      - name: Activate NVM
-        run: export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" --no-use
-
       - name: Install NodeJS
         env:
           NODE_VERSION: 16.5.0
-        run: nvm install
+        run: |
+          export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" --no-use
+          nvm install
 
       - name: Install dependencies
         run: npm i
