@@ -11,3 +11,14 @@ eslint:
     - nvm install
     - npm i
     - npm run lint
+
+prettier:
+  stage: lint
+  variables:
+    NODE_VERSION: 16.5.0
+  script:
+    - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+    - export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" --no-use
+    - nvm install
+    - npm i
+    - npm run check:format
