@@ -33,7 +33,6 @@ prettier:
 
 deploy:
   stage: deploy
-  image: ubuntu-latest
   script:
     - apt -qq update && apt -qqy install rsync
     - eval $(ssh-agent -s)
