@@ -1,5 +1,6 @@
 stages:
   - lint
+  - deploy
 
 cache:
   key:
@@ -8,10 +9,13 @@ cache:
   paths:
     - .npm/
 
-before_script:
-  - npm ci --cache .npm --prefer-offline
+.default-cache: &default-cache
+  before_script:
+    - npm ci --cache .npm --prefer-offline
 
 eslint:
+  extends:
+    - .default-cache
   stage: lint
   image: node:16-alpine
   script:
@@ -19,8 +23,25 @@ eslint:
     - npm run lint
 
 prettier:
+  extends:
+    - .default-cache
   stage: lint
   image: node:16-alpine
   script:
     - npm ci
     - npm run check:format
+
+deploy:
+  stage: deploy
+  image: ubuntu-latest
+  script:
+    - apt -qq update && apt -qqy install rsync
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - echo "$SSH_KNOWN_HOSTS" | tr -d '\r' | >> ~/.ssh/known_hosts
+    - rsync -a --progress --human-readable --delete \
+      --exclude-from '.gitignore' \
+      --exclude .gitignore \
+      --exclude .git \
+      --exclude public \
+      . deploy@$IP:~/realworld/
