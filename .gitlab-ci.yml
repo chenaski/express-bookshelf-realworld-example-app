@@ -39,11 +39,10 @@ deploy:
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - echo "$SSH_KNOWN_HOSTS" | tr -d '\r' >> ~/.ssh/known_hosts
-    - ls -a
     - rsync -a --progress --human-readable --delete
       --exclude-from '.gitignore'
       --exclude .gitignore
       --exclude .git
       --exclude public
       . deploy@$IP:~/realworld/
-    - ssh deploy@$IP "cd ~/realworld && npm i --production && pm2 restart ecosystem.config.js"
+    - ssh deploy@$IP "pushd ~/realworld && npm i --production && popd && pm2 restart ecosystem.config.js"
