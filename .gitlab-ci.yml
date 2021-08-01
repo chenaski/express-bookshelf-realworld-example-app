@@ -37,6 +37,7 @@ deploy:
     - apt -qq update && apt -qqy install rsync
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
     - echo "$SSH_KNOWN_HOSTS" | tr -d '\r' | >> ~/.ssh/known_hosts
     - rsync -a --progress --human-readable --delete \
       --exclude-from '.gitignore' \
@@ -44,3 +45,4 @@ deploy:
       --exclude .git \
       --exclude public \
       . deploy@$IP:~/realworld/
+    - ssh deploy@$IP "cd ~/realworld && npm i --production && pm2 restart"
