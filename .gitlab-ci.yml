@@ -15,12 +15,12 @@ eslint:
   stage: lint
   image: node:16-alpine
   script:
-    - npm i
+    - npm ci
     - npm run lint
 
 prettier:
   stage: lint
   image: node:16-alpine
   script:
-    - npm i
+    - npm ci
     - npm run check:format
