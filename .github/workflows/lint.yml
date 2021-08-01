@@ -17,6 +17,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Cache NodeJS modules
+        uses: actions/cache@v2
+        env:
+          cache-name: npm-${{ hashFiles('package-lock.json') }}
+        with:
+          path: ~/.npm
+          key: ${{ env.cache-name }}
+          restore-key: ${{ env.cache-name }}
+
       - name: Install dependencies
         run: npm i
 
@@ -30,6 +39,15 @@ jobs:
       image: node:16-alpine
     steps:
       - uses: actions/checkout@v2
+
+      - name: Cache NodeJS modules
+        uses: actions/cache@v2
+        env:
+          cache-name: npm-${{ hashFiles('package-lock.json') }}
+        with:
+          path: ~/.npm
+          key: ${{ env.cache-name }}
+          restore-key: ${{ env.cache-name }}
 
       - name: Install dependencies
         run: npm i
