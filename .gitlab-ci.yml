@@ -38,7 +38,7 @@ deploy:
     - mkdir -p ~/.ssh
     - ssh-keyscan -t ecdsa -H $IP >> ~/.ssh/known_hosts
     - rsync -a --progress --human-readable --delete
-      --exclude-from '.gitignore'
+      --exclude-from .gitignore
       --exclude .gitignore
       --exclude .git
       --exclude public

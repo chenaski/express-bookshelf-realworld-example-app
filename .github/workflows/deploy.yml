@@ -32,7 +32,7 @@ jobs:
           IP: ${{ secrets.IP }}
         run: |
           rsync -a --progress --human-readable --delete \
-            --exclude-from '.gitignore' \
+            --exclude-from .gitignore \
             --exclude .gitignore \
             --exclude .git \
             --exclude public \
