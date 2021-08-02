@@ -23,9 +23,9 @@ jobs:
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
         run: |
           eval $(ssh-agent -s)
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+          ssh-add - <<< "$SSH_PRIVATE_KEY"
           mkdir -p ~/.ssh
-          echo "$SSH_KNOWN_HOSTS" | | tr -d '\r' >> ~/.ssh/known_hosts
+          echo "$SSH_KNOWN_HOSTS" | tr -d '\r' >> ~/.ssh/known_hosts
 
       - name: Copy files to the server
         env:
