@@ -19,6 +19,7 @@ jobs:
 
       - name: Setup SSH
         env:
+          IP: ${{ secrets.IP }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
