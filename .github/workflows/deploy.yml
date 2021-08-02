@@ -19,6 +19,7 @@ jobs:
 
       - name: Setup SSH
         env:
+          IP: ${{ secrets.IP }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
         run: |
@@ -26,20 +27,10 @@ jobs:
           ssh-add - <<< "$SSH_PRIVATE_KEY"
           mkdir -p ~/.ssh
           echo "$SSH_KNOWN_HOSTS" | tr -d '\r' >> ~/.ssh/known_hosts
-
-      - name: Copy files to the server
-        env:
-          IP: ${{ secrets.IP }}
-        run: |
           rsync -a --progress --human-readable --delete \
             --exclude-from '.gitignore' \
             --exclude .gitignore \
             --exclude .git \
             --exclude public \
             . deploy@$IP:~/realworld
-
-      - name: Restart application
-        env:
-          IP: ${{ secrets.IP }}
-        run: |
           ssh deploy@$IP "pushd realworld && npm i --production && popd && pm2 restart ecosystem.config.js"
