@@ -22,7 +22,6 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
         run: |
-          apt -qq update && apt -qqy upgrade && apt install rsync
           eval $(ssh-agent -s)
           echo ${{ env.SSH_KEY }} | tr -d '\r' | ssh-add -
           mkdir -p ~/.ssh
