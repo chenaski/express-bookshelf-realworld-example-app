@@ -20,12 +20,11 @@ jobs:
       - name: Setup SSH
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ecdsa
           chmod 600 ~/.ssh/id_ecdsa
-          echo "$SSH_KNOWN_HOSTS" | tr -d '\r' >> ~/.ssh/known_hosts
+          ssh-keyscan -t ecdsa -H $IP >> ~/.ssh/known_hosts
 
       - name: Copy files to the server
         env:
