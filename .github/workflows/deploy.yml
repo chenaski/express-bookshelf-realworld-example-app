@@ -1,0 +1,46 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          apt -qq update && apt -qqy upgrade && apt install rsync
+          eval $(ssh-agent -s)
+          echo ${{ env.SSH_KEY }} | tr -d '\r' | ssh-add -
+          mkdir -p ~/.ssh
+          echo ${{ env.KNOWN_HOSTS }} | | tr -d '\r' >> ~/.ssh/known_hosts
+
+      - name: Copy files to the server
+        env:
+          IP: ${{ secrets.IP }}
+        run: |
+          rsync -a --progress --human-readable --delete \
+            --exclude-from '.gitignore' \
+            --exclude .gitignore \
+            --exclude .git \
+            --exclude public \
+            . deploy@${{ env.IP }}:~/realworld
+
+      - name: Restart application
+        env:
+          IP: ${{ secrets.IP }}
+        run: |
+          ssh deploy@${{ env.IP }} "pushd realworld && npm i --production && popd && pm2 restart ecosystem.config.js"
