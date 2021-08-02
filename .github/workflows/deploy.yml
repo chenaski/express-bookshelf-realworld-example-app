@@ -19,13 +19,13 @@ jobs:
 
       - name: Setup SSH
         env:
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
         run: |
           eval $(ssh-agent -s)
-          echo ${{ env.SSH_KEY }} | tr -d '\r' | ssh-add -
+          echo $SSH_PRIVATE_KEY | tr -d '\r' | ssh-add -
           mkdir -p ~/.ssh
-          echo ${{ env.KNOWN_HOSTS }} | | tr -d '\r' >> ~/.ssh/known_hosts
+          echo $SSH_KNOWN_HOSTS | | tr -d '\r' >> ~/.ssh/known_hosts
 
       - name: Copy files to the server
         env:
@@ -36,10 +36,10 @@ jobs:
             --exclude .gitignore \
             --exclude .git \
             --exclude public \
-            . deploy@${{ env.IP }}:~/realworld
+            . deploy@$IP:~/realworld
 
       - name: Restart application
         env:
           IP: ${{ secrets.IP }}
         run: |
-          ssh deploy@${{ env.IP }} "pushd realworld && npm i --production && popd && pm2 restart ecosystem.config.js"
+          ssh deploy@$IP "pushd realworld && npm i --production && popd && pm2 restart ecosystem.config.js"
