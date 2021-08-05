@@ -1,14 +1,7 @@
-name: Deploy
+name: Create review app
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
-    branches:
-      - main
-
-  workflow_dispatch:
 
 jobs:
   deploy:
@@ -30,16 +23,20 @@ jobs:
       - name: Copy files to the server
         env:
           IP: ${{ secrets.IP }}
+          BRANCH_NAME: ${{ github.head_ref }}
         run: |
           rsync -a --progress --human-readable --delete \
             --exclude-from .gitignore \
             --exclude .gitignore \
             --exclude .git \
             --exclude public \
-            . deploy@$IP:~/realworld
+            . deploy@$IP:~/app/$BRANCH_NAME/
 
-      - name: Restart application
+      - name: Start application
         env:
           IP: ${{ secrets.IP }}
+          BRANCH_NAME: ${{ github.head_ref }}
+          DB_NAME: ${{ secrets.DB_PASSWORD }}
+          DB_PASSWORD: ${{ github.head_ref }}
         run: |
-          ssh deploy@$IP "pushd realworld && npm i --production && popd && pm2 restart ecosystem.config.js"
+          ssh deploy@$IP "envsubst < ecosystem.config.js > ~/app/$BRANCH_NAME/ecosystem.config.js && pushd ~/app/$BRANCH_NAME && ./bin/create-db-copy.sh $DB_PASSWORD $BRANCH_NAME && npm i --production && pm2 restart ecosystem.config.js --name $BRANCH_NAME --env production && popd"
