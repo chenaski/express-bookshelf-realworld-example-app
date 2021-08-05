@@ -39,4 +39,4 @@ jobs:
           DB_NAME: ${{ github.head_ref }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
-          ssh deploy@$IP "envsubst < ecosystem.config.js > ~/app/$BRANCH_NAME/ecosystem.config.js && pushd ~/app/$BRANCH_NAME && ./bin/create-db-copy.sh $DB_PASSWORD $BRANCH_NAME && npm i --production && pm2 restart ecosystem.config.js --name $BRANCH_NAME --env production && popd"
+          ssh deploy@$IP "DB_NAME=$DB_NAME DB_PASSWORD=$DB_PASSWORD envsubst < ecosystem.config.js > ~/app/$BRANCH_NAME/ecosystem.config.js && pushd ~/app/$BRANCH_NAME && ./bin/create-db-copy.sh $DB_PASSWORD $BRANCH_NAME && npm i --production && pm2 restart ecosystem.config.js --name $BRANCH_NAME --env production && popd"
