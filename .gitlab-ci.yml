@@ -18,7 +18,7 @@ default:
 
 .setup_ssh:
   before_script:
-    - which ssh-agent || apk add --update openssh curl git
+    - which ssh-agent || apk add --update bash openssh curl git
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
