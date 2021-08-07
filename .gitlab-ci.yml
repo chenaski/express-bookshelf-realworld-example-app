@@ -45,7 +45,7 @@ deploy:
     DB_NAME: $CI_COMMIT_REF_SLUG
   script:
     - npm i -g pm2
-    - ssh -q deploy@$APP_HOST [[ -d "$DEPLOY" ]] && pm2 deploy ecosystem.config.js production setup
+    - ssh -q deploy@$APP_HOST [[ ! -d "$DEPLOY_DEST_DIR" ]] && pm2 deploy ecosystem.config.js production setup
     - |
       ssh -q deploy@$APP_HOST <<EOF
         echo "DB_NAME=$DB_NAME" > ~/.env
@@ -71,7 +71,7 @@ create_review_app:
     DB_NAME: $CI_COMMIT_REF_SLUG
   script:
     - npm i -g pm2
-    - ssh -q deploy@$APP_HOST [[ -d "$DEPLOY" ]] && pm2 deploy ecosystem.config.js production setup
+    - ssh -q deploy@$APP_HOST [[ ! -d "$DEPLOY_DEST_DIR" ]] && pm2 deploy ecosystem.config.js production setup
     - |
       ssh -q deploy@$APP_HOST <<EOF
         echo "DB_NAME=$DB_NAME" > ~/.env
