@@ -1,46 +1,107 @@
 stages:
   - lint
   - deploy
+  - review
 
-cache:
-  key:
-    files:
-      - package-lock.json
-  paths:
-    - .npm/
+default:
+  image: node:16-alpine
 
-.default-cache: &default-cache
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+
   before_script:
     - npm ci --cache .npm --prefer-offline --no-audit
 
+.setup_ssh:
+  before_script:
+    - which ssh-agent || apk-add --update openssh curl git
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - ssh-keyscan -t ecdsa -H $APP_HOST >> ~/.ssh/known_hosts
+
 eslint:
-  extends:
-    - .default-cache
   stage: lint
-  image: node:16-alpine
   script:
     - npm run lint
 
 prettier:
-  extends:
-    - .default-cache
   stage: lint
-  image: node:16-alpine
   script:
     - npm run check:format
 
 deploy:
   stage: deploy
+  extends:
+    - .setup_ssh
+  variables:
+    REPOSITORY_URL: git@gitlab.com:chenaski/express-bookshelf-realworld-example-app.git
+    DEPLOY_BRANCH: $CI_COMMIT_REF_NAME
+    DEPLOY_DEST_DIR: home/deploy/app/$CI_COMMIT_REF_SLUG
+    DB_NAME: $CI_COMMIT_REF_SLUG
   script:
-    - apt -qq update && apt -qqy install rsync
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    - mkdir -p ~/.ssh
-    - ssh-keyscan -t ecdsa -H $APP_HOST >> ~/.ssh/known_hosts
-    - rsync -a --progress --human-readable --delete
-      --exclude-from .gitignore
-      --exclude .gitignore
-      --exclude .git
-      --exclude public
-      . deploy@$APP_HOST:~/realworld/
-    - ssh deploy@$APP_HOST "pushd ~/realworld && npm i --production && popd && pm2 restart ecosystem.config.js"
+    - npm i -g pm2
+    - ssh -q deploy@$APP_HOST [[ -d "$DEPLOY" ]] && pm2 deploy ecosystem.config.js production setup
+    - |
+      ssh -q deploy@$APP_HOST <<EOF
+        echo "DB_NAME=$DB_NAME" > ~/.env
+        echo "DB_USER=$DB_USER" >> ~/.env
+        echo "DB_PASSWORD=$DB_PASSWORD" >> ~/.env
+        echo "SECRET=$SECRET" >> ~/.env
+      EOF
+    - pm2 deploy ecosystem.config.js production --update-env
+  environment:
+    name: production
+    url: http://$CI_COMMIT_REF_SLUG.$APP_HOST/
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+create_review_app:
+  stage: review
+  extends:
+    - .setup_ssh
+  variables:
+    REPOSITORY_URL: git@gitlab.com:chenaski/express-bookshelf-realworld-example-app.git
+    DEPLOY_BRANCH: $CI_COMMIT_REF_NAME
+    DEPLOY_DEST_DIR: home/deploy/app/$CI_COMMIT_REF_SLUG
+    DB_NAME: $CI_COMMIT_REF_SLUG
+  script:
+    - npm i -g pm2
+    - ssh -q deploy@$APP_HOST [[ -d "$DEPLOY" ]] && pm2 deploy ecosystem.config.js production setup
+    - |
+      ssh -q deploy@$APP_HOST <<EOF
+        echo "DB_NAME=$DB_NAME" > ~/.env
+        echo "DB_USER=$DB_USER" >> ~/.env
+        echo "DB_PASSWORD=$DB_PASSWORD" >> ~/.env
+        echo "SECRET=$SECRET" >> ~/.env
+      EOF
+    - pm2 deploy ecosystem.config.js production --update-env
+    - ssh deploy@$APP_HOST "$DEPLOY_DEST_DIR/current/bin/create-db-copy $DB_NAME && DB_NAME=$DB_NAME pm2 start $DEPLOY_DEST_DIR/current/ecosystem.config.js --env production --update-env"
+  environment:
+    name: review/$CI_COMMIT_REF_NAME
+    url: http://$CI_COMMIT_REF_SLUG.$APP_HOST/
+    on_stop: remove_review_app
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+remove_review_app:
+  stage: review
+  extends:
+    - .ssh_setup
+  environment:
+    name: production
+    action: stop
+  variables:
+    DEPLOY_DEST_DIR: home/deploy/app/$CI_COMMIT_REF_SLUG
+  script:
+    - |
+      ssh deploy@$APP_HOST <<EOF
+        pm2 delete ~/$DEPLOY_DEST_DIR/current/ecosystem.config.js
+      EOF
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
