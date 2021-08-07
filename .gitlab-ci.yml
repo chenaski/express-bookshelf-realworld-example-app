@@ -91,7 +91,7 @@ create_review_app:
 remove_review_app:
   stage: review
   extends:
-    - .ssh_setup
+    - .setup_ssh
   environment:
     name: production
     action: stop
