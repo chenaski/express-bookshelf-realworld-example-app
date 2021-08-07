@@ -18,13 +18,13 @@ jobs:
           chmod 600 ~/.ssh/id_ecdsa
           ssh-keyscan -t ecdsa -H $IP >> ~/.ssh/known_hosts
 
+      - name: Set env.BRANCH
+        run: echo "branch_name=$(echo ${{ github.ref }} | cut -d'/' -f 3)" >> $GITHUB_ENV
+
       - name: Run reset db script
         env:
           IP: ${{ secrets.IP }}
-          BRANCH_NAME: ${{ github.head_ref }}
+          BRANCH_NAME: ${{ env.branch_name }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
-          echo ${{ github.ref }}
-          echo ${{ github.base_ref }}
-          echo ${{ github.head_ref }}
           ssh deploy@$IP "pushd ~/app/$BRANCH_NAME && pm2 stop ecosystem.config.js && ./bin/craete-db-copy.sh $DB_PASSWORD $BRANCH_NAME && pm2 restart ecosystem.config.js && popd"
