@@ -8,7 +8,7 @@ jobs:
     name: Reset
     runs-on: ubuntu-latest
     steps:
-      - name: Setup SSh
+      - name: Setup SSH
         env:
           IP: ${{ secrets.IP }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -24,4 +24,7 @@ jobs:
           BRANCH_NAME: ${{ github.head_ref }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
+          echo ${{ github.ref }}
+          echo ${{ github.base_ref }}
+          echo ${{ github.head_ref }}
           ssh deploy@$IP "pushd ~/app/$BRANCH_NAME && pm2 stop ecosystem.config.js && ./bin/craete-db-copy.sh $DB_PASSWORD $BRANCH_NAME && pm2 restart ecosystem.config.js && popd"
