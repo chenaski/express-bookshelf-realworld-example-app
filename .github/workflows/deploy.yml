@@ -12,27 +12,27 @@ jobs:
 
       - name: Setup SSH
         env:
-          IP: ${{ secrets.IP }}
+          APP_HOST: ${{ secrets.APP_HOST }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ecdsa
           chmod 600 ~/.ssh/id_ecdsa
-          ssh-keyscan -t ecdsa -H $IP >> ~/.ssh/known_hosts
+          ssh-keyscan -t ecdsa -H $APP_HOST >> ~/.ssh/known_hosts
 
       - name: Copy files to the server
         env:
-          IP: ${{ secrets.IP }}
+          APP_HOST: ${{ secrets.APP_HOST }}
         run: |
           rsync -a --progress --human-readable --delete \
             --exclude-from .gitignore \
             --exclude .gitignore \
             --exclude .git \
             --exclude public \
-            . deploy@$IP:~/realworld
+            . deploy@$APP_HOST:~/realworld
 
       - name: Restart application
         env:
-          IP: ${{ secrets.IP }}
+          APP_HOST: ${{ secrets.APP_HOST }}
         run: |
-          ssh deploy@$IP "pushd realworld && npm i --production && popd && pm2 restart ecosystem.config.js"
+          ssh deploy@$APP_HOST "pushd realworld && npm i --production && popd && pm2 restart ecosystem.config.js"
