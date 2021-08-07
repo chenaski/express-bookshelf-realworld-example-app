@@ -41,3 +41,46 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: |
           ssh deploy@$IP "DB_NAME=$DB_NAME DB_PASSWORD=$DB_PASSWORD envsubst < ecosystem.config.js > ~/app/$BRANCH_NAME/ecosystem.config.js && pushd ~/app/$BRANCH_NAME && pm2 stop ecosystem.config.js && ./bin/create-db-copy.sh $DB_PASSWORD $BRANCH_NAME && npm i --production && pm2 restart ecosystem.config.js && popd"
+
+  deploy-frontend:
+    name: Deploy frontend
+    runs-on: ubuntu-latest
+    steps:
+      - id: check-branch
+        continue-on-error: true
+        uses: octokit/request-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        with:
+          route: GET /repos/{owner}/{repo}/git/ref/:ref
+          owner: chenaski
+          repo: react-redux-realworld-example-app
+          ref: ${{ github.head_ref }}
+
+      - if: steps.check-branch.output.status == 200
+        name: Trigger fronted review app
+        uses: octokit/request-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        with:
+          route: POST /repos/{owner}/{repo}/actions/workflows/publish-review-app.yml/dispatches
+          owner: chenaski
+          repo: react-redux-realworld-example-app
+          ref: ${{ github.head_ref }}
+          inputs: |
+            ref: ${{ github.head_ref }}
+            dest: ${{ github.head_ref }}
+
+      - if: steps.check-branch.output.status != 200
+        name: Trigger fronted review app
+        uses: octokit/request-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        with:
+          route: POST /repos/{owner}/{repo}/actions/workflows/publish-review-app.yml/dispatches
+          owner: chenaski
+          repo: react-redux-realworld-example-app
+          ref: main
+          inputs: |
+            ref: main
+            dest: ${{ github.head_ref }}
