@@ -93,7 +93,7 @@ remove_review_app:
   extends:
     - .setup_ssh
   environment:
-    name: production
+    name: review/$CI_COMMIT_REF_NAME
     action: stop
   variables:
     DEPLOY_DEST_DIR: home/deploy/app/$CI_COMMIT_REF_SLUG
