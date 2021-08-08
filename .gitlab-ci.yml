@@ -41,7 +41,7 @@ deploy:
   variables:
     REPOSITORY_URL: git@gitlab.com:chenaski/express-bookshelf-realworld-example-app.git
     DEPLOY_BRANCH: $CI_COMMIT_REF_NAME
-    DEPLOY_DEST_DIR: home/deploy/app/$CI_COMMIT_REF_SLUG
+    DEPLOY_DEST_DIR: /home/deploy/app/$CI_COMMIT_REF_SLUG
     DB_NAME: $CI_COMMIT_REF_SLUG
   script:
     - npm i -g pm2
@@ -67,7 +67,7 @@ create_review_app:
   variables:
     REPOSITORY_URL: git@gitlab.com:chenaski/express-bookshelf-realworld-example-app.git
     DEPLOY_BRANCH: $CI_COMMIT_REF_NAME
-    DEPLOY_DEST_DIR: home/deploy/app/$CI_COMMIT_REF_SLUG
+    DEPLOY_DEST_DIR: /home/deploy/app/$CI_COMMIT_REF_SLUG
     DB_NAME: $CI_COMMIT_REF_SLUG
   script:
     - npm i -g pm2
@@ -96,7 +96,7 @@ remove_review_app:
     name: review/$CI_COMMIT_REF_NAME
     action: stop
   variables:
-    DEPLOY_DEST_DIR: home/deploy/app/$CI_COMMIT_REF_SLUG
+    DEPLOY_DEST_DIR: /home/deploy/app/$CI_COMMIT_REF_SLUG
   script:
     - |
       ssh deploy@$APP_HOST <<EOF
