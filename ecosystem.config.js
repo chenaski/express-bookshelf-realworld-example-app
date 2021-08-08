@@ -17,8 +17,6 @@ module.exports = {
       ref: `origin/${process.env.DEPLOY_BRANCH}`,
       path: process.env.DEPLOY_DEST_DIR,
       ssh_options: ['StrictHostKeyChecking=no'],
-      fetch: '--all',
-      'pre-deploy': 'ls -a',
       'post-deploy': `cp ../.env . && npm i && DB_NAME=${process.env.DB_NAME} pm2 startOrRestart ecosystem.config.js --env production --update-env`,
     },
   },
