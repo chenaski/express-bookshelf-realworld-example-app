@@ -39,7 +39,7 @@ deploy:
   extends:
     - .setup_ssh
   variables:
-    REPOSITORY_URL: https://gitlab.com/chenaski/express-bookshelf-realworld-example-app
+    REPOSITORY_URL: git@gitlab.com:chenaski/express-bookshelf-realworld-example-app.git
     DEPLOY_BRANCH: $CI_COMMIT_REF_NAME
     DEPLOY_DEST_DIR: /home/deploy/app/$CI_COMMIT_REF_SLUG
     DB_NAME: $CI_COMMIT_REF_SLUG
@@ -65,7 +65,7 @@ create_review_app:
   extends:
     - .setup_ssh
   variables:
-    REPOSITORY_URL: https://gitlab.com/chenaski/express-bookshelf-realworld-example-app
+    REPOSITORY_URL: git@gitlab.com:chenaski/express-bookshelf-realworld-example-app.git
     DEPLOY_BRANCH: $CI_COMMIT_REF_NAME
     DEPLOY_DEST_DIR: /home/deploy/app/$CI_COMMIT_REF_SLUG
     DB_NAME: $CI_COMMIT_REF_SLUG
