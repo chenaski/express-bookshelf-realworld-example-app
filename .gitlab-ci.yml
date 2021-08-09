@@ -84,10 +84,10 @@ create_review_app:
       EOF
     - pm2 deploy ecosystem.config.js production --update-env
     - ssh $SSH_USER@$SSH_HOST "$DEPLOY_DEST_DIR/current/bin/create-db-copy.sh $DB_NAME && DB_NAME=$DB_NAME pm2 start $DEPLOY_DEST_DIR/current/ecosystem.config.js --env production --update-env"
-    - 'status_code=$(curl -I --header "PRIVATE_TOKEN: $PAT_TOKEN" --write-out "%{http_code}" --silent --output /dev/null "$BRANCH_EXISTS_URL")'
-    - '[[ "$status_code" -ne 204 ]] && status_code=$(curl -I --header "PRIVATE_TOKEN: $PAT_TOKEN" --write-out "%{http_code}" --silent --output /dev/null "$CREATE_BRANCH_URL")'
+    - 'status_code=$(curl -I --header "PRIVATE-TOKEN: $PAT_TOKEN" --write-out "%{http_code}" --silent --output /dev/null "$BRANCH_EXISTS_URL")'
+    - '[[ "$status_code" -ne 204 ]] && status_code=$(curl -X POST --header "PRIVATE-TOKEN: $PAT_TOKEN" --write-out "%{http_code}" --silent --output /dev/null "$CREATE_BRANCH_URL")'
     - '[[ "$status_code" -ne 400 ]] && echo "Branch already exists" && exit 0'
-    - 'curl -X POST --header "PRIVATE_TOKEN: $PAT_TOKEN" --write-out "%{http_code}" --silent --output /dev/null "$TRIGGER_PIPELINE_URL"'
+    - 'curl -X POST --header "PRIVATE-TOKEN: $PAT_TOKEN" --write-out "%{http_code}" --silent --output /dev/null "$TRIGGER_PIPELINE_URL"'
   environment:
     name: review/$CI_COMMIT_REF_NAME
     url: http://$CI_COMMIT_REF_SLUG.$SSH_HOST/
