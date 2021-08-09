@@ -98,10 +98,20 @@ remove_review_app:
   variables:
     DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
   script:
-    - |
-      ssh $SSH_USER@$SSH_HOST <<EOF
-        pm2 delete ~/$DEPLOY_DEST_DIR/current/ecosystem.config.js
-      EOF
+    - ssh $SSH_USER@$SSH_HOST pm2 delete ~/$DEPLOY_DEST_DIR/current/ecosystem.config.js
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+
+reset_db:
+  stage: review
+  extends:
+    - .setup_ssh
+  variables:
+    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
+    DB_NAME: $CI_COMMIT_REF_SLUG
+  script:
+    - ssh $SSH_USER@$SSH_HOST cd $DEPLOY_DEST_DIR/current/bin/create-db-copy.sh $DB_NAME
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
