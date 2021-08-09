@@ -39,7 +39,7 @@ deploy:
   extends:
     - .setup_ssh
   variables:
-    REPOSITORY_URL: https://gitlab.com/chenaski/express-bookshelf-realworld-example-app
+    REPOSITORY_URL: https://gitlab.com/chenaski/express-bookshelf-realworld-example-app.git
     DEPLOY_BRANCH: $CI_COMMIT_REF_NAME
     DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
     DB_NAME: $CI_COMMIT_REF_SLUG
@@ -65,7 +65,7 @@ create_review_app:
   extends:
     - .setup_ssh
   variables:
-    REPOSITORY_URL: https://gitlab.com/chenaski/express-bookshelf-realworld-example-app
+    REPOSITORY_URL: https://gitlab.com/chenaski/express-bookshelf-realworld-example-app.git
     DEPLOY_BRANCH: $CI_COMMIT_REF_NAME
     DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
     DB_NAME: $CI_COMMIT_REF_SLUG
@@ -80,7 +80,7 @@ create_review_app:
         echo "SECRET=$SECRET" >> ~/.env
       EOF
     - pm2 deploy ecosystem.config.js production --update-env
-    - ssh $SSH_USER@$SSH_HOST "$DEPLOY_DEST_DIR/current/bin/create-db-copy $DB_NAME && DB_NAME=$DB_NAME pm2 start $DEPLOY_DEST_DIR/current/ecosystem.config.js --env production --update-env"
+    - ssh $SSH_USER@$SSH_HOST "$DEPLOY_DEST_DIR/current/bin/create-db-copy.sh $DB_NAME && DB_NAME=$DB_NAME pm2 start $DEPLOY_DEST_DIR/current/ecosystem.config.js --env production --update-env"
   environment:
     name: review/$CI_COMMIT_REF_NAME
     url: http://$CI_COMMIT_REF_SLUG.$SSH_HOST/
