@@ -22,7 +22,7 @@ default:
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
-    - ssh-keyscan -t ecdsa -H $APP_HOST >> ~/.ssh/known_hosts
+    - ssh-keyscan -t ecdsa -H $SSH_HOST >> ~/.ssh/known_hosts
 
 eslint:
   stage: lint
@@ -41,13 +41,13 @@ deploy:
   variables:
     REPOSITORY_URL: https://gitlab.com/chenaski/express-bookshelf-realworld-example-app
     DEPLOY_BRANCH: $CI_COMMIT_REF_NAME
-    DEPLOY_DEST_DIR: /home/deploy/app/$CI_COMMIT_REF_SLUG
+    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
     DB_NAME: $CI_COMMIT_REF_SLUG
   script:
     - npm i -g pm2
-    - ssh -q deploy@$APP_HOST [[ ! -d "$DEPLOY_DEST_DIR" ]] && pm2 deploy ecosystem.config.js production setup
+    - ssh -q $SSH_USER@$SSH_HOST [[ ! -d "$DEPLOY_DEST_DIR" ]] && pm2 deploy ecosystem.config.js production setup
     - |
-      ssh -q deploy@$APP_HOST <<EOF
+      ssh -q $SSH_USER@$SSH_HOST <<EOF
         echo "DB_NAME=$DB_NAME" > ~/.env
         echo "DB_USER=$DB_USER" >> ~/.env
         echo "DB_PASSWORD=$DB_PASSWORD" >> ~/.env
@@ -56,7 +56,7 @@ deploy:
     - pm2 deploy ecosystem.config.js production --update-env
   environment:
     name: production
-    url: http://$CI_COMMIT_REF_SLUG.$APP_HOST/
+    url: http://$CI_COMMIT_REF_SLUG.$SSH_HOST/
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
@@ -67,23 +67,23 @@ create_review_app:
   variables:
     REPOSITORY_URL: https://gitlab.com/chenaski/express-bookshelf-realworld-example-app
     DEPLOY_BRANCH: $CI_COMMIT_REF_NAME
-    DEPLOY_DEST_DIR: /home/deploy/app/$CI_COMMIT_REF_SLUG
+    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
     DB_NAME: $CI_COMMIT_REF_SLUG
   script:
     - npm i -g pm2
-    - ssh -q deploy@$APP_HOST [[ ! -d "$DEPLOY_DEST_DIR" ]] && pm2 deploy ecosystem.config.js production setup
+    - ssh -q $SSH_USER@$SSH_HOST [[ ! -d "$DEPLOY_DEST_DIR" ]] && pm2 deploy ecosystem.config.js production setup
     - |
-      ssh -q deploy@$APP_HOST <<EOF
+      ssh -q $SSH_USER@$SSH_HOST <<EOF
         echo "DB_NAME=$DB_NAME" > ~/.env
         echo "DB_USER=$DB_USER" >> ~/.env
         echo "DB_PASSWORD=$DB_PASSWORD" >> ~/.env
         echo "SECRET=$SECRET" >> ~/.env
       EOF
     - pm2 deploy ecosystem.config.js production --update-env
-    - ssh deploy@$APP_HOST "$DEPLOY_DEST_DIR/current/bin/create-db-copy $DB_NAME && DB_NAME=$DB_NAME pm2 start $DEPLOY_DEST_DIR/current/ecosystem.config.js --env production --update-env"
+    - ssh $SSH_USER@$SSH_HOST "$DEPLOY_DEST_DIR/current/bin/create-db-copy $DB_NAME && DB_NAME=$DB_NAME pm2 start $DEPLOY_DEST_DIR/current/ecosystem.config.js --env production --update-env"
   environment:
     name: review/$CI_COMMIT_REF_NAME
-    url: http://$CI_COMMIT_REF_SLUG.$APP_HOST/
+    url: http://$CI_COMMIT_REF_SLUG.$SSH_HOST/
     on_stop: remove_review_app
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -96,10 +96,10 @@ remove_review_app:
     name: review/$CI_COMMIT_REF_NAME
     action: stop
   variables:
-    DEPLOY_DEST_DIR: /home/deploy/app/$CI_COMMIT_REF_SLUG
+    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
   script:
     - |
-      ssh deploy@$APP_HOST <<EOF
+      ssh $SSH_USER@$SSH_HOST <<EOF
         pm2 delete ~/$DEPLOY_DEST_DIR/current/ecosystem.config.js
       EOF
   rules:

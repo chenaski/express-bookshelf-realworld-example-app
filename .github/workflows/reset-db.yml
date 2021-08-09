@@ -10,20 +10,21 @@ jobs:
     steps:
       - name: Setup SSH
         env:
-          APP_HOST: ${{ secrets.APP_HOST }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_ecdsa
           chmod 600 ~/.ssh/id_ecdsa
-          ssh-keyscan -t ecdsa -H $APP_HOST >> ~/.ssh/known_hosts
+          ssh-keyscan -t ecdsa -H $SSH_HOST >> ~/.ssh/known_hosts
 
       - name: Set env.BRANCH
         run: echo "branch_name=$(echo ${{ github.ref }} | cut -d'/' -f 3)" >> $GITHUB_ENV
 
       - name: Run reset db script
         env:
-          APP_HOST: ${{ secrets.APP_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
           BRANCH_NAME: ${{ env.branch_name }}
         run: |
-          ssh deploy@$APP_HOST "pushd ~/app/$BRANCH_NAME && pm2 stop ecosystem.config.js && ./bin/create-db-copy.sh $BRANCH_NAME && pm2 restart ecosystem.config.js && popd"
+          ssh $SSH_USER@$SSH_HOST "pushd ~/app/$BRANCH_NAME && pm2 stop ecosystem.config.js && ./bin/create-db-copy.sh $BRANCH_NAME && pm2 restart ecosystem.config.js && popd"
