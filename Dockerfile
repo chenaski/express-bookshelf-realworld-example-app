@@ -1,12 +1,9 @@
-FROM node:14.17.0
+FROM node:16-alpine
 
-RUN npm install -g npm@latest
-
-RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
-COPY package.json package-lock.json ./
-RUN npm install
+COPY package*.json ./
+RUN npm ci --no-audit
 
 COPY . .
 
