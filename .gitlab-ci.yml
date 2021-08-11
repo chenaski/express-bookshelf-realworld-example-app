@@ -71,7 +71,7 @@ create_review_app:
     DB_NAME: $CI_COMMIT_REF_SLUG
     BRANCH_EXISTS_URL: https://gitlab.com/api/v4/projects/$FRONTEND_PROJECT_ID/repository/branches/$CI_COMMIT_REF_NAME
     CREATE_BRANCH_URL: https://gitlab.com/api/v4/projects/$FRONTEND_PROJECT_ID/repository/branches?branch=$CI_COMMIT_REF_NAME&ref=$CI_DEFAULT_BRANCH
-    TRIGGER_PIPELINE_URL: https://gitlab.com/api/v4/projects/$FRONTEND_PROJECT_ID/pipeline?ref=CI_COMMIT_REF_NAME
+    TRIGGER_PIPELINE_URL: https://gitlab.com/api/v4/projects/$FRONTEND_PROJECT_ID/pipeline?ref=$CI_COMMIT_REF_NAME
   script:
     - npm i -g pm2
     - ssh -q $SSH_USER@$SSH_HOST [[ ! -d "$DEPLOY_DEST_DIR" ]] && pm2 deploy ecosystem.config.js production setup
