@@ -2,6 +2,8 @@ stages:
   - lint
   - build
   - push
+  - deploy
+  - review
 
 .node:
   image: node:16-alpine
