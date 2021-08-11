@@ -67,7 +67,7 @@ create_review_app:
   variables:
     REPOSITORY_URL: https://gitlab.com/chenaski/express-bookshelf-realworld-example-app.git
     DEPLOY_BRANCH: $CI_COMMIT_REF_NAME
-    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
+    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG/current
     DB_NAME: $CI_COMMIT_REF_SLUG
     BRANCH_EXISTS_URL: https://gitlab.com/api/v4/projects/$FRONTEND_PROJECT_ID/repository/branches/$CI_COMMIT_REF_NAME
     CREATE_BRANCH_URL: https://gitlab.com/api/v4/projects/$FRONTEND_PROJECT_ID/repository/branches?branch=$CI_COMMIT_REF_NAME&ref=$CI_DEFAULT_BRANCH
@@ -83,7 +83,7 @@ create_review_app:
         echo "SECRET=$SECRET" >> ~/.env
       EOF
     - pm2 deploy ecosystem.config.js production --update-env
-    - ssh $SSH_USER@$SSH_HOST "$DEPLOY_DEST_DIR/current/bin/create-db-copy.sh $DB_NAME && DB_NAME=$DB_NAME pm2 start $DEPLOY_DEST_DIR/current/ecosystem.config.js --env production --update-env"
+    - ssh $SSH_USER@$SSH_HOST "$DEPLOY_DEST_DIR/bin/create-db-copy.sh $DB_NAME && DB_NAME=$DB_NAME pm2 start $DEPLOY_DEST_DIR/ecosystem.config.js --env production --update-env"
     - 'status_code=$(curl -I --header "PRIVATE-TOKEN: $PAT_TOKEN" --write-out "%{http_code}" --silent --output /dev/null "$BRANCH_EXISTS_URL")'
     - '[[ "$status_code" -ne 204 ]] && status_code=$(curl -X POST --header "PRIVATE-TOKEN: $PAT_TOKEN" --write-out "%{http_code}" --silent --output /dev/null "$CREATE_BRANCH_URL")'
     - '[[ "$status_code" -ne 400 ]] && echo "Branch already exists" && exit 0'
@@ -105,9 +105,9 @@ remove_review_app:
     name: review/$CI_COMMIT_REF_NAME
     action: stop
   variables:
-    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
+    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG/current
   script:
-    - ssh $SSH_USER@$SSH_HOST pm2 delete ~/$DEPLOY_DEST_DIR/current/ecosystem.config.js
+    - ssh $SSH_USER@$SSH_HOST pm2 delete ~/$DEPLOY_DEST_DIR/ecosystem.config.js
   rules:
     - if: '$CI_MERGE_REQUEST_TITLE =~ /\[SKIP REVIEW\]/'
       when: never
@@ -119,10 +119,10 @@ reset_db:
   extends:
     - .setup_ssh
   variables:
-    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
+    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG/current
     DB_NAME: $CI_COMMIT_REF_SLUG
   script:
-    - ssh $SSH_USER@$SSH_HOST cd $DEPLOY_DEST_DIR/current/bin/create-db-copy.sh $DB_NAME
+    - ssh $SSH_USER@$SSH_HOST cd $DEPLOY_DEST_DIR/bin/create-db-copy.sh $DB_NAME
   rules:
     - if: '$CI_MERGE_REQUEST_TITLE =~ /\[SKIP REVIEW\]/'
       when: never
