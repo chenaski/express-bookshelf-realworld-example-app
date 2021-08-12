@@ -35,17 +35,17 @@ stages:
     - ssh-keyscan -t ecdsa -H $SSH_HOST >> ~/.ssh/known_hosts
 
 lint:
+  stage: lint
   extends:
     - .node
-  stage: lint
   script:
     - npm run lint
     - npm run check:format
 
 build:
+  stage: build
   extends:
     - .docker
-  stage: build
   script:
     - >
       docker build
@@ -58,9 +58,9 @@ build:
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
 
 push_latest:
+  stage: push
   extends:
     - .docker
-  stage: push
   variables:
     GIT_STRATEGY: none
   script:
@@ -71,6 +71,7 @@ push_latest:
     - main
 
 deploy:
+  stage: deploy
   tags:
     - remote
   variables:
@@ -80,7 +81,7 @@ deploy:
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - mkdir -p ~/deploy/$CI_COMMIT_REF_SLUG
     - cp ~/docker-compose.yml ~/deploy/$CI_COMMIT_REF_SLUG/
-    - docker stack deploy $CI_COMMIT_REF_SLUG -c /home/gitlab-runner/deploy/$CI_COMMIT_REF_SLUG/docker-compose.yml --with-registry-auth
+    - docker stack deploy $CI_COMMIT_REF_SLUG -c ~/deploy/$CI_COMMIT_REF_SLUG/docker-compose.yml --with-registry-auth
   environment:
     name: production
     url: http://$CI_COMMIT_REF_SLUG.$APP_HOST
