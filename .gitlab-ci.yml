@@ -29,14 +29,6 @@ stages:
   before_script:
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD $CI_REGISTRY
 
-.setup_ssh:
-  before_script:
-    - which ssh-agent || apk add --update bash openssh curl git
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    - mkdir -p ~/.ssh
-    - ssh-keyscan -t ecdsa -H $SSH_HOST >> ~/.ssh/known_hosts
-
 lint:
   stage: lint
   extends:
@@ -134,21 +126,6 @@ remove_review_app:
     - docker stack rm $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - docker rmi $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - rm -rf ~/deploy/$CI_COMMIT_REF_SLUG
-  rules:
-    - if: '$CI_MERGE_REQUEST_TITLE =~ /\[SKIP REVIEW\]/'
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: manual
-
-reset_db:
-  stage: review
-  extends:
-    - .setup_ssh
-  variables:
-    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
-    DB_NAME: $CI_COMMIT_REF_SLUG
-  script:
-    - ssh $SSH_USER@$SSH_HOST cd $DEPLOY_DEST_DIR/current/bin/create-db-copy.sh $DB_NAME
   rules:
     - if: '$CI_MERGE_REQUEST_TITLE =~ /\[SKIP REVIEW\]/'
       when: never
