@@ -113,6 +113,19 @@ create_review_app:
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
+create_review_app_frontend:
+  needs:
+    - create_review_app
+  trigger:
+    project: 'chenaski/react-redux-realworld-example-app'
+    strategy: depend
+  variables:
+    REMOTE_REF: $CI_COMMIT_REF_NAME
+  rules:
+    - if: '$CI_MERGE_REQUEST_TITLE =~ /\[SKIP REVIEW\]/'
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
 remove_review_app:
   stage: review
   tags:
