@@ -25,6 +25,10 @@ stages:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
+.registry-auth:
+  before_script:
+    - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD $CI_REGISTRY
+
 .setup_ssh:
   before_script:
     - which ssh-agent || apk add --update bash openssh curl git
@@ -80,10 +84,11 @@ deploy:
   stage: deploy
   tags:
     - remote
+  extends:
+    - .registry-auth
   variables:
     GIT_STRATEGY: none
   script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - mkdir -p ~/deploy/$CI_COMMIT_REF_SLUG
     - cp ~/docker-compose.yml ~/deploy/$CI_COMMIT_REF_SLUG/
@@ -98,10 +103,11 @@ create_review_app:
   stage: review
   tags:
     - remote
+  extends:
+    - .registry-auth
   variables:
     GIT_STRATEGY: none
   script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - mkdir -p ~/deploy/$CI_COMMIT_REF_SLUG
     - cp ~/docker-compose.yml ~/deploy/$CI_COMMIT_REF_SLUG/
@@ -125,7 +131,6 @@ remove_review_app:
   variables:
     GIT_STRATEGY: none
   script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker stack rm $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - docker rmi $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
     - rm -rf ~/deploy/$CI_COMMIT_REF_SLUG
