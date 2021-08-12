@@ -111,7 +111,7 @@ create_review_app:
 
 create_review_app_frontend:
   needs:
-    - create_review_app
+    - build
   trigger:
     project: 'chenaski/react-redux-realworld-example-app'
     strategy: depend
@@ -123,6 +123,8 @@ create_review_app_frontend:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 remove_review_app:
+  needs:
+    - create_review_app
   tags:
     - remote
   environment:
