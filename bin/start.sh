@@ -3,6 +3,7 @@
 set -e
 
 if [ "$NODE_ENV" = "production" ]; then
+  npx knex --knexfile config/knexfile.js migrate:latest
   node lib/server.js
 else
   npx knex --knexfile config/knexfile.js migrate:latest
