@@ -23,7 +23,6 @@
     - docker login -u $CI_DEPLOY_USER -p $CI_DEPLOY_PASSWORD $CI_REGISTRY
 
 lint:
-  stage: lint
   extends:
     - .node
   script:
@@ -34,7 +33,6 @@ lint:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 build:
-  stage: build
   needs:
     - lint
   extends:
@@ -55,7 +53,6 @@ build:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 push_latest:
-  stage: push
   needs:
     - build
   extends:
@@ -70,7 +67,6 @@ push_latest:
     - main
 
 deploy:
-  stage: deploy
   needs:
     - build
   tags:
@@ -91,7 +87,6 @@ deploy:
     - if: $CI_COMMIT_BRANCH == "main"
 
 create_review_app:
-  stage: review
   needs:
     - build
   tags:
@@ -128,7 +123,6 @@ create_review_app_frontend:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 remove_review_app:
-  stage: review
   tags:
     - remote
   environment:
