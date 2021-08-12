@@ -71,25 +71,16 @@ push_latest:
     - main
 
 deploy:
-  stage: deploy
-  extends:
-    - .setup_ssh
+  tags:
+    - remote
   variables:
-    REPOSITORY_URL: https://gitlab.com/chenaski/express-bookshelf-realworld-example-app.git
-    DEPLOY_BRANCH: $CI_COMMIT_REF_NAME
-    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
-    DB_NAME: $CI_COMMIT_REF_SLUG
+    GIT_STRATEGY: none
   script:
-    - npm i -g pm2
-    - ssh -q $SSH_USER@$SSH_HOST [[ ! -d "$DEPLOY_DEST_DIR" ]] && pm2 deploy ecosystem.config.js production setup
-    - |
-      ssh -q $SSH_USER@$SSH_HOST <<EOF
-        echo "DB_NAME=$DB_NAME" > ~/.env
-        echo "DB_USER=$DB_USER" >> ~/.env
-        echo "DB_PASSWORD=$DB_PASSWORD" >> ~/.env
-        echo "SECRET=$SECRET" >> ~/.env
-      EOF
-    - pm2 deploy ecosystem.config.js production --update-env
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - mkdir -p ~/deploy/$CI_COMMIT_REF_SLUG
+    - cp ~/docker-compose.yml ~/deploy/$CI_COMMIT_REF_SLUG/
+    - docker stack deploy $CI_COMMIT_REF_SLUG -c /home/gitlab-runner/deploy/$CI_COMMIT_REF_SLUG/docker-compose.yml --with-registry-auth
   environment:
     name: production
     url: http://$CI_COMMIT_REF_SLUG.$APP_HOST
