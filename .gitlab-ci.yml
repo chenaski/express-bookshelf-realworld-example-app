@@ -90,32 +90,16 @@ deploy:
 
 create_review_app:
   stage: review
-  extends:
-    - .setup_ssh
+  tags:
+    - remote
   variables:
-    REPOSITORY_URL: https://gitlab.com/chenaski/express-bookshelf-realworld-example-app.git
-    DEPLOY_BRANCH: $CI_COMMIT_REF_NAME
-    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
-    DB_NAME: $CI_COMMIT_REF_SLUG
-    BRANCH_EXISTS_URL: https://gitlab.com/api/v4/projects/$FRONTEND_PROJECT_ID/repository/branches/$CI_COMMIT_REF_NAME
-    CREATE_BRANCH_URL: https://gitlab.com/api/v4/projects/$FRONTEND_PROJECT_ID/repository/branches?branch=$CI_COMMIT_REF_NAME&ref=$CI_DEFAULT_BRANCH
-    TRIGGER_PIPELINE_URL: https://gitlab.com/api/v4/projects/$FRONTEND_PROJECT_ID/pipeline?ref=$CI_COMMIT_REF_NAME
+    GIT_STRATEGY: none
   script:
-    - npm i -g pm2
-    - ssh -q $SSH_USER@$SSH_HOST [[ ! -d "$DEPLOY_DEST_DIR" ]] && pm2 deploy ecosystem.config.js production setup
-    - |
-      ssh -q $SSH_USER@$SSH_HOST <<EOF
-        echo "DB_NAME=$DB_NAME" > ~/.env
-        echo "DB_USER=$DB_USER" >> ~/.env
-        echo "DB_PASSWORD=$DB_PASSWORD" >> ~/.env
-        echo "SECRET=$SECRET" >> ~/.env
-      EOF
-    - pm2 deploy ecosystem.config.js production --update-env
-    - ssh $SSH_USER@$SSH_HOST "$DEPLOY_DEST_DIR/current/bin/create-db-copy.sh $DB_NAME && DB_NAME=$DB_NAME pm2 start $DEPLOY_DEST_DIR/current/ecosystem.config.js --env production --update-env"
-    - 'status_code=$(curl -I --header "PRIVATE-TOKEN: $PAT_TOKEN" --write-out "%{http_code}" --silent --output /dev/null "$BRANCH_EXISTS_URL")'
-    - '[[ "$status_code" -ne 204 ]] && status_code=$(curl -X POST --header "PRIVATE-TOKEN: $PAT_TOKEN" --write-out "%{http_code}" --silent --output /dev/null "$CREATE_BRANCH_URL")'
-    - '[[ "$status_code" -ne 400 ]] && echo "Branch already exists" && exit 0'
-    - 'curl -X POST --header "PRIVATE-TOKEN: $PAT_TOKEN" --write-out "%{http_code}" --silent --output /dev/null "$TRIGGER_PIPELINE_URL"'
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - mkdir -p ~/deploy/$CI_COMMIT_REF_SLUG
+    - cp ~/docker-compose.yml ~/deploy/$CI_COMMIT_REF_SLUG/
+    - docker stack deploy $CI_COMMIT_REF_SLUG -c ~/deploy/$CI_COMMIT_REF_SLUG/docker-compose.yml --with-registry-auth
   environment:
     name: review/$CI_COMMIT_REF_NAME
     url: http://$CI_COMMIT_REF_SLUG.$APP_HOST/
@@ -127,16 +111,18 @@ create_review_app:
 
 remove_review_app:
   stage: review
-  extends:
-    - .setup_ssh
+  tags:
+    - remote
   environment:
     name: review/$CI_COMMIT_REF_NAME
     action: stop
   variables:
-    DEPLOY_DEST_DIR: /home/$SSH_USER/app/$CI_COMMIT_REF_SLUG
-    DB_NAME: $CI_COMMIT_REF_SLUG
+    GIT_STRATEGY: none
   script:
-    - ssh $SSH_USER@$SSH_HOST DB_NAME=$DB_NAME pm2 delete $DEPLOY_DEST_DIR/current/ecosystem.config.js
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker stack rm $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - docker rmi $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    - rm -rf ~/deploy/$CI_COMMIT_REF_SLUG
   rules:
     - if: '$CI_MERGE_REQUEST_TITLE =~ /\[SKIP REVIEW\]/'
       when: never
