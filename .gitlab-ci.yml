@@ -115,7 +115,6 @@ create_review_app_frontend:
   trigger:
     project: 'chenaski/react-redux-realworld-example-app'
     strategy: depend
-    branch: $CI_COMMIT_BRANCH
   variables:
     REMOTE_REF: $CI_COMMIT_REF_NAME
   rules:
